@@ -1,7 +1,11 @@
 /**
  * MemeForge - Background Service Worker
- * Handles context menu for right-clicking images
  */
+
+// Open side panel when extension icon is clicked
+chrome.action.onClicked.addListener((tab) => {
+  chrome.sidePanel.open({ tabId: tab.id });
+});
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
@@ -10,6 +14,9 @@ chrome.runtime.onInstalled.addListener(() => {
     title: 'Edit in MemeForge',
     contexts: ['image']
   });
+  
+  // Enable side panel to open on action click
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
 // Handle context menu click
@@ -18,18 +25,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     // Store the image URL
     await chrome.storage.local.set({ contextMenuImageUrl: info.srcUrl });
     
-    // Set badge to indicate image is ready
-    chrome.action.setBadgeText({ text: '1' });
-    chrome.action.setBadgeBackgroundColor({ color: '#e94560' });
-    
-    // Note: Can't programmatically open popup in Manifest V3
-    // User needs to click the extension icon
-  }
-});
-
-// Clear badge when popup opens
-chrome.runtime.onConnect.addListener((port) => {
-  if (port.name === 'popup') {
-    chrome.action.setBadgeText({ text: '' });
+    // Open the side panel
+    chrome.sidePanel.open({ tabId: tab.id });
   }
 });

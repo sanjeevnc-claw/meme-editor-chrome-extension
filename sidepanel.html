@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MemeForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <div class="header">
+      <h1>MemeForge</h1>
+    </div>
+
+    <!-- Canvas Area -->
+    <div class="canvas-area">
+      <canvas id="meme-canvas"></canvas>
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">Paste image (Ctrl+V)<br>or drag & drop</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <!-- Images Section -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Images</span>
+          <button id="clear-images" class="text-btn">Clear all</button>
+        </div>
+        <div id="drop-zone" class="drop-zone">
+          <span>+ Drop or click to add</span>
+        </div>
+        <div id="image-list" class="image-list"></div>
+      </div>
+
+      <!-- Layout Section -->
+      <div class="section">
+        <div class="section-title">Layout</div>
+        <div class="layout-buttons">
+          <button class="layout-btn active" data-layout="single" title="Single">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button class="layout-btn" data-layout="vertical" title="Vertical Stack">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="16" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button class="layout-btn" data-layout="horizontal" title="Side by Side">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="16" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="16" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button class="layout-btn" data-layout="grid" title="2x2 Grid">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Background & Aspect -->
+      <div class="section">
+        <div class="row">
+          <div class="field">
+            <label>Background</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active" data-bg="#ffffff">White</button>
+              <button class="toggle-btn" data-bg="#000000">Black</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Aspect</label>
+            <select id="aspect-ratio">
+              <option value="1:1">1:1</option>
+              <option value="4:3">4:3</option>
+              <option value="16:9">16:9</option>
+              <option value="9:16">9:16</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Section -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Text</span>
+          <button id="add-text-btn" class="text-btn">+ Add text</button>
+        </div>
+        
+        <div id="text-controls" class="text-controls hidden">
+          <div class="row">
+            <div class="field">
+              <label>Font</label>
+              <select id="font-family">
+                <option value="Impact">Impact</option>
+                <option value="Arial Black">Arial</option>
+                <option value="Comic Sans MS">Comic Sans</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Size</label>
+              <input type="number" id="font-size" value="32" min="12" max="120">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Fill</label>
+              <input type="color" id="text-color" value="#ffffff">
+            </div>
+            <div class="field">
+              <label>Stroke</label>
+              <input type="color" id="stroke-color" value="#000000">
+            </div>
+            <div class="field">
+              <label>Width</label>
+              <input type="number" id="stroke-width" value="2" min="0" max="10">
+            </div>
+          </div>
+          <button id="delete-text-btn" class="delete-btn">Delete selected</button>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="section export-section">
+        <button id="copy-btn" class="primary-btn">📋 Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lib/fabric.min.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
