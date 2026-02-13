@@ -80,16 +80,16 @@
       <div class="section">
         <div class="section-title">Layout</div>
         <div class="layout-buttons">
-          <button class="layout-btn active" data-layout="single" title="Single">
+          <button class="layout-btn active" data-layout="single" title="Single" aria-label="Single image layout" aria-pressed="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
           </button>
-          <button class="layout-btn" data-layout="vertical" title="Vertical Stack">
+          <button class="layout-btn" data-layout="vertical" title="Vertical Stack" aria-label="Vertical stack layout" aria-pressed="false">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="16" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
           </button>
-          <button class="layout-btn" data-layout="horizontal" title="Side by Side">
+          <button class="layout-btn" data-layout="horizontal" title="Side by Side" aria-label="Side by side layout" aria-pressed="false">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="16" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="16" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
           </button>
-          <button class="layout-btn" data-layout="grid" title="2x2 Grid">
+          <button class="layout-btn" data-layout="grid" title="2x2 Grid" aria-label="2x2 grid layout" aria-pressed="false">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
           </button>
         </div>
@@ -131,7 +131,7 @@
             <div class="row">
               <div class="field">
                 <label>Zoom</label>
-                <input type="range" id="image-zoom" min="50" max="200" value="100">
+                <input type="range" id="image-zoom" min="50" max="200" value="100" aria-label="Image zoom percentage">
               </div>
               <div class="field zoom-value-field">
                 <span id="zoom-value">100%</span>
