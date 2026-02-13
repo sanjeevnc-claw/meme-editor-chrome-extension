@@ -15,6 +15,8 @@ let currentBgColor = '#ffffff';
 let imageZoom = 100;
 let imagePosX = 0;
 let imagePosY = 0;
+let paddingTop = 0;
+let paddingBottom = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', init);
@@ -122,6 +124,17 @@ function setupEventListeners() {
     document.getElementById('zoom-value').textContent = '100%';
     document.getElementById('image-pos-x').value = 0;
     document.getElementById('image-pos-y').value = 0;
+    renderCanvas();
+  });
+  
+  // Padding controls
+  document.getElementById('padding-top').addEventListener('input', (e) => {
+    paddingTop = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('padding-bottom').addEventListener('input', (e) => {
+    paddingBottom = parseInt(e.target.value);
     renderCanvas();
   });
   
@@ -315,41 +328,45 @@ function renderCanvas() {
   }
   
   const width = canvas.width;
-  const height = canvas.height;
+  const totalHeight = canvas.height;
+  
+  // Calculate image area with padding
+  const imageTop = paddingTop;
+  const imageHeight = totalHeight - paddingTop - paddingBottom;
   
   switch (currentLayout) {
     case 'single':
-      renderSingleImage(width, height);
+      renderSingleImage(width, imageHeight, imageTop);
       break;
     case 'vertical':
-      renderVerticalStack(width, height);
+      renderVerticalStack(width, imageHeight, imageTop);
       break;
     case 'horizontal':
-      renderHorizontalSplit(width, height);
+      renderHorizontalSplit(width, imageHeight, imageTop);
       break;
     case 'grid':
-      renderGrid(width, height);
+      renderGrid(width, imageHeight, imageTop);
       break;
   }
 }
 
-function renderSingleImage(width, height) {
+function renderSingleImage(width, height, offsetY = 0) {
   if (images.length === 0) return;
   
   images[0].fabricImage.clone((img) => {
-    scaleAndPositionImage(img, 0, 0, width, height);
+    scaleAndPositionImage(img, 0, offsetY, width, height);
     canvas.add(img);
     canvas.sendToBack(img);
     canvas.renderAll();
   });
 }
 
-function renderVerticalStack(width, height) {
+function renderVerticalStack(width, height, offsetY = 0) {
   const halfHeight = height / 2;
   
   if (images.length >= 1) {
     images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, 0, width, halfHeight);
+      scaleAndPositionImage(img, 0, offsetY, width, halfHeight);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -358,7 +375,7 @@ function renderVerticalStack(width, height) {
   
   if (images.length >= 2) {
     images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, halfHeight, width, halfHeight);
+      scaleAndPositionImage(img, 0, offsetY + halfHeight, width, halfHeight);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -366,12 +383,12 @@ function renderVerticalStack(width, height) {
   }
 }
 
-function renderHorizontalSplit(width, height) {
+function renderHorizontalSplit(width, height, offsetY = 0) {
   const halfWidth = width / 2;
   
   if (images.length >= 1) {
     images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, 0, halfWidth, height);
+      scaleAndPositionImage(img, 0, offsetY, halfWidth, height);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -380,7 +397,7 @@ function renderHorizontalSplit(width, height) {
   
   if (images.length >= 2) {
     images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, halfWidth, 0, halfWidth, height);
+      scaleAndPositionImage(img, halfWidth, offsetY, halfWidth, height);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -388,12 +405,12 @@ function renderHorizontalSplit(width, height) {
   }
 }
 
-function renderGrid(width, height) {
+function renderGrid(width, height, offsetY = 0) {
   const halfWidth = width / 2;
   const halfHeight = height / 2;
   const positions = [
-    [0, 0], [halfWidth, 0],
-    [0, halfHeight], [halfWidth, halfHeight]
+    [0, offsetY], [halfWidth, offsetY],
+    [0, offsetY + halfHeight], [halfWidth, offsetY + halfHeight]
   ];
   
   for (let i = 0; i < Math.min(images.length, 4); i++) {
