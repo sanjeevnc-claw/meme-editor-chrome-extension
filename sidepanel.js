@@ -17,6 +17,8 @@ let imagePosX = 0;
 let imagePosY = 0;
 let paddingTop = 0;
 let paddingBottom = 0;
+let paddingLeft = 0;
+let paddingRight = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', init);
@@ -128,6 +130,17 @@ function setupEventListeners() {
   });
   
   // Padding controls
+  document.getElementById('padding-all').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    paddingTop = paddingBottom = paddingLeft = paddingRight = val;
+    document.getElementById('padding-value').textContent = val;
+    document.getElementById('padding-top').value = val;
+    document.getElementById('padding-bottom').value = val;
+    document.getElementById('padding-left').value = val;
+    document.getElementById('padding-right').value = val;
+    renderCanvas();
+  });
+  
   document.getElementById('padding-top').addEventListener('input', (e) => {
     paddingTop = parseInt(e.target.value);
     renderCanvas();
@@ -135,6 +148,27 @@ function setupEventListeners() {
   
   document.getElementById('padding-bottom').addEventListener('input', (e) => {
     paddingBottom = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('padding-left').addEventListener('input', (e) => {
+    paddingLeft = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('padding-right').addEventListener('input', (e) => {
+    paddingRight = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('reset-padding').addEventListener('click', () => {
+    paddingTop = paddingBottom = paddingLeft = paddingRight = 0;
+    document.getElementById('padding-all').value = 0;
+    document.getElementById('padding-value').textContent = '0';
+    document.getElementById('padding-top').value = 0;
+    document.getElementById('padding-bottom').value = 0;
+    document.getElementById('padding-left').value = 0;
+    document.getElementById('padding-right').value = 0;
     renderCanvas();
   });
   
@@ -327,46 +361,45 @@ function renderCanvas() {
     return;
   }
   
-  const width = canvas.width;
-  const totalHeight = canvas.height;
-  
-  // Calculate image area with padding
+  // Calculate image area with padding on all sides
+  const imageLeft = paddingLeft;
   const imageTop = paddingTop;
-  const imageHeight = totalHeight - paddingTop - paddingBottom;
+  const imageWidth = canvas.width - paddingLeft - paddingRight;
+  const imageHeight = canvas.height - paddingTop - paddingBottom;
   
   switch (currentLayout) {
     case 'single':
-      renderSingleImage(width, imageHeight, imageTop);
+      renderSingleImage(imageWidth, imageHeight, imageLeft, imageTop);
       break;
     case 'vertical':
-      renderVerticalStack(width, imageHeight, imageTop);
+      renderVerticalStack(imageWidth, imageHeight, imageLeft, imageTop);
       break;
     case 'horizontal':
-      renderHorizontalSplit(width, imageHeight, imageTop);
+      renderHorizontalSplit(imageWidth, imageHeight, imageLeft, imageTop);
       break;
     case 'grid':
-      renderGrid(width, imageHeight, imageTop);
+      renderGrid(imageWidth, imageHeight, imageLeft, imageTop);
       break;
   }
 }
 
-function renderSingleImage(width, height, offsetY = 0) {
+function renderSingleImage(width, height, offsetX = 0, offsetY = 0) {
   if (images.length === 0) return;
   
   images[0].fabricImage.clone((img) => {
-    scaleAndPositionImage(img, 0, offsetY, width, height);
+    scaleAndPositionImage(img, offsetX, offsetY, width, height);
     canvas.add(img);
     canvas.sendToBack(img);
     canvas.renderAll();
   });
 }
 
-function renderVerticalStack(width, height, offsetY = 0) {
+function renderVerticalStack(width, height, offsetX = 0, offsetY = 0) {
   const halfHeight = height / 2;
   
   if (images.length >= 1) {
     images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, offsetY, width, halfHeight);
+      scaleAndPositionImage(img, offsetX, offsetY, width, halfHeight);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -375,7 +408,7 @@ function renderVerticalStack(width, height, offsetY = 0) {
   
   if (images.length >= 2) {
     images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, offsetY + halfHeight, width, halfHeight);
+      scaleAndPositionImage(img, offsetX, offsetY + halfHeight, width, halfHeight);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -383,12 +416,12 @@ function renderVerticalStack(width, height, offsetY = 0) {
   }
 }
 
-function renderHorizontalSplit(width, height, offsetY = 0) {
+function renderHorizontalSplit(width, height, offsetX = 0, offsetY = 0) {
   const halfWidth = width / 2;
   
   if (images.length >= 1) {
     images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, 0, offsetY, halfWidth, height);
+      scaleAndPositionImage(img, offsetX, offsetY, halfWidth, height);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -397,7 +430,7 @@ function renderHorizontalSplit(width, height, offsetY = 0) {
   
   if (images.length >= 2) {
     images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, halfWidth, offsetY, halfWidth, height);
+      scaleAndPositionImage(img, offsetX + halfWidth, offsetY, halfWidth, height);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -405,12 +438,12 @@ function renderHorizontalSplit(width, height, offsetY = 0) {
   }
 }
 
-function renderGrid(width, height, offsetY = 0) {
+function renderGrid(width, height, offsetX = 0, offsetY = 0) {
   const halfWidth = width / 2;
   const halfHeight = height / 2;
   const positions = [
-    [0, offsetY], [halfWidth, offsetY],
-    [0, offsetY + halfHeight], [halfWidth, offsetY + halfHeight]
+    [offsetX, offsetY], [offsetX + halfWidth, offsetY],
+    [offsetX, offsetY + halfHeight], [offsetX + halfWidth, offsetY + halfHeight]
   ];
   
   for (let i = 0; i < Math.min(images.length, 4); i++) {

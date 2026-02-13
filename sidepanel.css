@@ -268,14 +268,16 @@ body {
   cursor: pointer;
 }
 
-.zoom-value-field {
+.zoom-value-field,
+.padding-value-field {
   flex: 0 0 40px;
   display: flex;
   align-items: flex-end;
   padding-bottom: 4px;
 }
 
-.zoom-value-field span {
+.zoom-value-field span,
+.padding-value-field span {
   font-size: 11px;
   color: #666;
 }

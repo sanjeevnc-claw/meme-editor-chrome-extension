@@ -78,7 +78,19 @@
 
       <!-- Padding Section -->
       <div class="section">
-        <div class="section-title">Padding</div>
+        <div class="section-header">
+          <span class="section-title">Padding</span>
+          <button id="reset-padding" class="text-btn">Reset</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>All sides</label>
+            <input type="range" id="padding-all" min="0" max="100" value="0">
+          </div>
+          <div class="field padding-value-field">
+            <span id="padding-value">0</span>
+          </div>
+        </div>
         <div class="row">
           <div class="field">
             <label>Top</label>
@@ -87,6 +99,16 @@
           <div class="field">
             <label>Bottom</label>
             <input type="range" id="padding-bottom" min="0" max="100" value="0">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Left</label>
+            <input type="range" id="padding-left" min="0" max="100" value="0">
+          </div>
+          <div class="field">
+            <label>Right</label>
+            <input type="range" id="padding-right" min="0" max="100" value="0">
           </div>
         </div>
       </div>
