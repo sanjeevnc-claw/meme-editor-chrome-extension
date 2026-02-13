@@ -425,6 +425,27 @@ body {
 /* Export */
 .export-section {
   padding: 16px;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.export-buttons .primary-btn {
+  flex: 1;
+}
+
+.download-btn {
+  background: #0066cc !important;
+}
+
+.download-btn:hover {
+  background: #0055aa !important;
 }
 
 .secondary-btn {

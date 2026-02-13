@@ -195,6 +195,9 @@ const MemeForge = {
     // Copy to clipboard
     document.getElementById('copy-btn').addEventListener('click', () => this.copyToClipboard());
     
+    // Download HD
+    document.getElementById('download-btn').addEventListener('click', () => this.downloadHD());
+    
     // Canvas selection events
     this.canvas.on('selection:created', () => this.showTextControls());
     this.canvas.on('selection:updated', () => this.showTextControls());
@@ -782,7 +785,7 @@ const MemeForge = {
       btn.classList.add('success');
       
       setTimeout(() => {
-        btn.textContent = '📋 Copy to Clipboard';
+        btn.textContent = '📋 Copy';
         btn.classList.remove('success');
       }, 2000);
       
@@ -790,7 +793,50 @@ const MemeForge = {
       console.error('Failed to copy:', err);
       btn.textContent = '❌ Failed';
       setTimeout(() => {
-        btn.textContent = '📋 Copy to Clipboard';
+        btn.textContent = '📋 Copy';
+      }, 2000);
+    }
+  },
+
+  async downloadHD() {
+    const btn = document.getElementById('download-btn');
+    const originalText = btn.textContent;
+    
+    try {
+      btn.textContent = '⏳ Rendering...';
+      
+      this.canvas.discardActiveObject();
+      this.canvas.renderAll();
+      
+      // Export at 3x resolution for HD quality (400px -> 1200px)
+      const multiplier = 3;
+      const dataURL = this.canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: multiplier
+      });
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `memeforge-${Date.now()}.png`;
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      btn.textContent = '✓ Downloaded!';
+      btn.classList.add('success');
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('success');
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Failed to download:', err);
+      btn.textContent = '❌ Failed';
+      setTimeout(() => {
+        btn.textContent = originalText;
       }, 2000);
     }
   },
