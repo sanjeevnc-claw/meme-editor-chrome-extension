@@ -11,7 +11,7 @@ let canvas;
 let images = []; // { id, dataUrl, fabricImage, zoom, posX, posY }
 let currentLayout = 'single';
 let currentAspect = '1:1';
-let currentBgColor = '#ffffff';
+let currentBgColor = '#000000'; // Default to black
 let selectedImageId = null; // Currently selected image for adjustment
 let paddingTop = 0;
 let paddingBottom = 0;
@@ -194,6 +194,29 @@ function setupEventListeners() {
   canvas.on('selection:created', showTextControls);
   canvas.on('selection:updated', showTextControls);
   canvas.on('selection:cleared', hideTextControls);
+  
+  // Collapsible sections
+  document.getElementById('image-adjust-toggle').addEventListener('click', () => {
+    toggleCollapsible('image-adjust-content', 'image-adjust-toggle');
+  });
+  
+  document.getElementById('padding-toggle').addEventListener('click', () => {
+    toggleCollapsible('padding-content', 'padding-toggle');
+  });
+}
+
+function toggleCollapsible(contentId, toggleId) {
+  const content = document.getElementById(contentId);
+  const toggle = document.getElementById(toggleId);
+  const icon = toggle.querySelector('.collapse-icon');
+  
+  content.classList.toggle('collapsed');
+  
+  if (content.classList.contains('collapsed')) {
+    icon.style.transform = 'rotate(-90deg)';
+  } else {
+    icon.style.transform = 'rotate(0deg)';
+  }
 }
 
 function openFilePicker() {
@@ -313,8 +336,7 @@ function selectImage(id) {
   const img = images.find(i => i.id === id);
   if (img) {
     updateImageAdjustUI(img);
-    document.getElementById('image-adjust-section').classList.remove('disabled');
-    document.getElementById('selected-image-label').textContent = `Image ${images.indexOf(img) + 1}`;
+    document.getElementById('selected-image-label').textContent = `Image ${images.indexOf(img) + 1} selected`;
   }
 }
 
@@ -364,8 +386,7 @@ function removeImage(id) {
       selectImage(images[0].id);
     } else {
       selectedImageId = null;
-      document.getElementById('image-adjust-section').classList.add('disabled');
-      document.getElementById('selected-image-label').textContent = 'No image selected';
+      document.getElementById('selected-image-label').textContent = 'Click a thumbnail to select';
     }
   }
   
@@ -381,8 +402,7 @@ function clearAllImages() {
   images = [];
   selectedImageId = null;
   document.getElementById('image-list').innerHTML = '';
-  document.getElementById('image-adjust-section').classList.add('disabled');
-  document.getElementById('selected-image-label').textContent = 'No image selected';
+  document.getElementById('selected-image-label').textContent = 'Click a thumbnail to select';
   renderCanvas();
   saveImagesToStorage();
   showEmptyState();

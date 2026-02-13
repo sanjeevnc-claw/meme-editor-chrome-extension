@@ -119,6 +119,49 @@ body {
   color: #999;
 }
 
+/* Collapsible sections */
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapsible-header:hover {
+  opacity: 0.7;
+}
+
+.collapse-icon {
+  font-size: 10px;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.collapsible-content.collapsed + .collapsible-header .collapse-icon,
+.collapsible-header:has(+ .collapsible-content.collapsed) .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+  max-height: 500px;
+}
+
+.collapsible-content.collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.adjust-status {
+  margin-bottom: 8px;
+  padding-top: 8px;
+}
+
+.adjust-status span {
+  font-size: 11px;
+  color: #0066cc;
+}
+
 .text-btn {
   background: none;
   border: none;

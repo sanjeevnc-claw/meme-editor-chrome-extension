@@ -39,7 +39,7 @@
         <div id="image-list" class="image-list"></div>
       </div>
 
-      <!-- Text Section (moved up) -->
+      <!-- Text Section -->
       <div class="section">
         <button id="add-text-btn" class="secondary-btn">+ Add Text</button>
         
@@ -48,7 +48,7 @@
             <div class="field">
               <label>Font</label>
               <select id="font-family">
-                <option value="Impact">Impact</option>
+                <option value="Impact" selected>Impact</option>
                 <option value="Arial Black">Arial</option>
                 <option value="Comic Sans MS">Comic Sans</option>
               </select>
@@ -73,43 +73,6 @@
             </div>
           </div>
           <button id="delete-text-btn" class="delete-btn">Delete selected</button>
-        </div>
-      </div>
-
-      <!-- Padding Section -->
-      <div class="section">
-        <div class="section-header">
-          <span class="section-title">Padding</span>
-          <button id="reset-padding" class="text-btn">Reset</button>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>All sides</label>
-            <input type="range" id="padding-all" min="0" max="100" value="0">
-          </div>
-          <div class="field padding-value-field">
-            <span id="padding-value">0</span>
-          </div>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>Top</label>
-            <input type="range" id="padding-top" min="0" max="100" value="0">
-          </div>
-          <div class="field">
-            <label>Bottom</label>
-            <input type="range" id="padding-bottom" min="0" max="100" value="0">
-          </div>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>Left</label>
-            <input type="range" id="padding-left" min="0" max="100" value="0">
-          </div>
-          <div class="field">
-            <label>Right</label>
-            <input type="range" id="padding-right" min="0" max="100" value="0">
-          </div>
         </div>
       </div>
 
@@ -138,8 +101,8 @@
           <div class="field">
             <label>Background</label>
             <div class="toggle-group">
-              <button class="toggle-btn active" data-bg="#ffffff">White</button>
-              <button class="toggle-btn" data-bg="#000000">Black</button>
+              <button class="toggle-btn" data-bg="#ffffff">White</button>
+              <button class="toggle-btn active" data-bg="#000000">Black</button>
             </div>
           </div>
           <div class="field">
@@ -154,32 +117,79 @@
         </div>
       </div>
 
-      <!-- Image Zoom & Position -->
-      <div class="section disabled" id="image-adjust-section">
-        <div class="section-header">
+      <!-- Image Adjust (collapsible) -->
+      <div class="section collapsible">
+        <div class="section-header collapsible-header" id="image-adjust-toggle">
           <span class="section-title">Image Adjust</span>
-          <span id="selected-image-label" class="selected-label">No image selected</span>
+          <span class="collapse-icon">▼</span>
         </div>
-        <div class="row">
-          <div class="field">
-            <label>Zoom</label>
-            <input type="range" id="image-zoom" min="50" max="200" value="100">
+        <div class="collapsible-content collapsed" id="image-adjust-content">
+          <div class="adjust-status">
+            <span id="selected-image-label">Click a thumbnail to select</span>
           </div>
-          <div class="field zoom-value-field">
-            <span id="zoom-value">100%</span>
+          <div id="image-adjust-controls">
+            <div class="row">
+              <div class="field">
+                <label>Zoom</label>
+                <input type="range" id="image-zoom" min="50" max="200" value="100">
+              </div>
+              <div class="field zoom-value-field">
+                <span id="zoom-value">100%</span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>Position X</label>
+                <input type="range" id="image-pos-x" min="-50" max="50" value="0">
+              </div>
+              <div class="field">
+                <label>Position Y</label>
+                <input type="range" id="image-pos-y" min="-50" max="50" value="0">
+              </div>
+            </div>
+            <button id="reset-adjust" class="text-btn">Reset to default</button>
           </div>
         </div>
-        <div class="row">
-          <div class="field">
-            <label>Position X</label>
-            <input type="range" id="image-pos-x" min="-50" max="50" value="0">
-          </div>
-          <div class="field">
-            <label>Position Y</label>
-            <input type="range" id="image-pos-y" min="-50" max="50" value="0">
-          </div>
+      </div>
+
+      <!-- Padding (collapsible) -->
+      <div class="section collapsible">
+        <div class="section-header collapsible-header" id="padding-toggle">
+          <span class="section-title">Padding</span>
+          <span class="collapse-icon">▼</span>
         </div>
-        <button id="reset-adjust" class="text-btn">Reset to default</button>
+        <div class="collapsible-content collapsed" id="padding-content">
+          <div class="row">
+            <div class="field">
+              <label>All sides</label>
+              <input type="range" id="padding-all" min="0" max="100" value="0">
+            </div>
+            <div class="field padding-value-field">
+              <span id="padding-value">0</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Top</label>
+              <input type="range" id="padding-top" min="0" max="100" value="0">
+            </div>
+            <div class="field">
+              <label>Bottom</label>
+              <input type="range" id="padding-bottom" min="0" max="100" value="0">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Left</label>
+              <input type="range" id="padding-left" min="0" max="100" value="0">
+            </div>
+            <div class="field">
+              <label>Right</label>
+              <input type="range" id="padding-right" min="0" max="100" value="0">
+            </div>
+          </div>
+          <button id="reset-padding" class="text-btn">Reset</button>
+        </div>
       </div>
 
       <!-- Export -->
