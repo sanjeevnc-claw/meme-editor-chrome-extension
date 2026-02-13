@@ -104,6 +104,21 @@ body {
   color: #666;
 }
 
+.selected-label {
+  font-size: 11px;
+  color: #0066cc;
+  font-weight: 500;
+}
+
+.section.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.section.disabled .selected-label {
+  color: #999;
+}
+
 .text-btn {
   background: none;
   border: none;
@@ -159,6 +174,12 @@ body {
 
 .image-thumb-container {
   position: relative;
+  cursor: pointer;
+}
+
+.image-thumb-container.selected .image-thumb {
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3);
 }
 
 .image-thumb-remove {

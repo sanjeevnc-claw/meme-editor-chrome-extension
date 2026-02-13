@@ -12,9 +12,7 @@ let images = []; // { id, dataUrl, fabricImage, zoom, posX, posY }
 let currentLayout = 'single';
 let currentAspect = '1:1';
 let currentBgColor = '#ffffff';
-let imageZoom = 100;
-let imagePosX = 0;
-let imagePosY = 0;
+let selectedImageId = null; // Currently selected image for adjustment
 let paddingTop = 0;
 let paddingBottom = 0;
 let paddingLeft = 0;
@@ -101,32 +99,49 @@ function setupEventListeners() {
   // Delete text
   document.getElementById('delete-text-btn').addEventListener('click', deleteSelectedText);
   
-  // Image zoom & position
+  // Per-image zoom & position controls
   document.getElementById('image-zoom').addEventListener('input', (e) => {
-    imageZoom = parseInt(e.target.value);
-    document.getElementById('zoom-value').textContent = imageZoom + '%';
-    renderCanvas();
+    if (!selectedImageId) return;
+    const img = images.find(i => i.id === selectedImageId);
+    if (img) {
+      img.zoom = parseInt(e.target.value);
+      document.getElementById('zoom-value').textContent = img.zoom + '%';
+      renderCanvas();
+      saveImagesToStorage();
+    }
   });
   
   document.getElementById('image-pos-x').addEventListener('input', (e) => {
-    imagePosX = parseInt(e.target.value);
-    renderCanvas();
+    if (!selectedImageId) return;
+    const img = images.find(i => i.id === selectedImageId);
+    if (img) {
+      img.posX = parseInt(e.target.value);
+      renderCanvas();
+      saveImagesToStorage();
+    }
   });
   
   document.getElementById('image-pos-y').addEventListener('input', (e) => {
-    imagePosY = parseInt(e.target.value);
-    renderCanvas();
+    if (!selectedImageId) return;
+    const img = images.find(i => i.id === selectedImageId);
+    if (img) {
+      img.posY = parseInt(e.target.value);
+      renderCanvas();
+      saveImagesToStorage();
+    }
   });
   
   document.getElementById('reset-adjust').addEventListener('click', () => {
-    imageZoom = 100;
-    imagePosX = 0;
-    imagePosY = 0;
-    document.getElementById('image-zoom').value = 100;
-    document.getElementById('zoom-value').textContent = '100%';
-    document.getElementById('image-pos-x').value = 0;
-    document.getElementById('image-pos-y').value = 0;
-    renderCanvas();
+    if (!selectedImageId) return;
+    const img = images.find(i => i.id === selectedImageId);
+    if (img) {
+      img.zoom = 100;
+      img.posX = 0;
+      img.posY = 0;
+      updateImageAdjustUI(img);
+      renderCanvas();
+      saveImagesToStorage();
+    }
   });
   
   // Padding controls
@@ -245,11 +260,18 @@ async function addImageFromBlob(blob) {
       const imageData = {
         id: Date.now(),
         dataUrl: dataUrl,
-        fabricImage: img
+        fabricImage: img,
+        zoom: 100,
+        posX: 0,
+        posY: 0
       };
       
       images.push(imageData);
       addImageThumbnail(imageData);
+      
+      // Auto-select the first image or newly added image
+      selectImage(imageData.id);
+      
       renderCanvas();
       hideEmptyState();
       saveImagesToStorage();
@@ -259,13 +281,16 @@ async function addImageFromBlob(blob) {
 }
 
 // Add image from data URL (for loading from storage)
-function addImageFromDataURL(dataUrl, id) {
+function addImageFromDataURL(dataUrl, id, zoom = 100, posX = 0, posY = 0) {
   return new Promise((resolve) => {
     fabric.Image.fromURL(dataUrl, (img) => {
       const imageData = {
         id: id || Date.now(),
         dataUrl: dataUrl,
-        fabricImage: img
+        fabricImage: img,
+        zoom: zoom,
+        posX: posX,
+        posY: posY
       };
       
       images.push(imageData);
@@ -275,11 +300,42 @@ function addImageFromDataURL(dataUrl, id) {
   });
 }
 
+// Select image for adjustment
+function selectImage(id) {
+  selectedImageId = id;
+  
+  // Update thumbnail selection UI
+  document.querySelectorAll('.image-thumb-container').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id == id);
+  });
+  
+  // Update adjustment controls
+  const img = images.find(i => i.id === id);
+  if (img) {
+    updateImageAdjustUI(img);
+    document.getElementById('image-adjust-section').classList.remove('disabled');
+    document.getElementById('selected-image-label').textContent = `Image ${images.indexOf(img) + 1}`;
+  }
+}
+
+function updateImageAdjustUI(img) {
+  document.getElementById('image-zoom').value = img.zoom;
+  document.getElementById('zoom-value').textContent = img.zoom + '%';
+  document.getElementById('image-pos-x').value = img.posX;
+  document.getElementById('image-pos-y').value = img.posY;
+}
+
 // Thumbnail management
 function addImageThumbnail(imageData) {
   const container = document.createElement('div');
   container.className = 'image-thumb-container';
   container.dataset.id = imageData.id;
+  
+  // Make thumbnail clickable to select
+  container.addEventListener('click', (e) => {
+    if (e.target.classList.contains('image-thumb-remove')) return;
+    selectImage(imageData.id);
+  });
   
   const thumb = document.createElement('img');
   thumb.className = 'image-thumb';
@@ -301,6 +357,18 @@ function addImageThumbnail(imageData) {
 function removeImage(id) {
   images = images.filter(img => img.id !== id);
   document.querySelector(`[data-id="${id}"]`)?.remove();
+  
+  // If removed image was selected, select another or clear
+  if (selectedImageId === id) {
+    if (images.length > 0) {
+      selectImage(images[0].id);
+    } else {
+      selectedImageId = null;
+      document.getElementById('image-adjust-section').classList.add('disabled');
+      document.getElementById('selected-image-label').textContent = 'No image selected';
+    }
+  }
+  
   renderCanvas();
   saveImagesToStorage();
   
@@ -311,17 +379,23 @@ function removeImage(id) {
 
 function clearAllImages() {
   images = [];
+  selectedImageId = null;
   document.getElementById('image-list').innerHTML = '';
+  document.getElementById('image-adjust-section').classList.add('disabled');
+  document.getElementById('selected-image-label').textContent = 'No image selected';
   renderCanvas();
   saveImagesToStorage();
   showEmptyState();
 }
 
-// Storage
+// Storage - now saves per-image zoom/position
 async function saveImagesToStorage() {
   const imageDataArray = images.map(img => ({
     id: img.id,
-    dataUrl: img.dataUrl
+    dataUrl: img.dataUrl,
+    zoom: img.zoom,
+    posX: img.posX,
+    posY: img.posY
   }));
   
   try {
@@ -336,7 +410,17 @@ async function loadSavedImages() {
     const result = await chrome.storage.local.get(['savedImages']);
     if (result.savedImages && result.savedImages.length > 0) {
       for (const imgData of result.savedImages) {
-        await addImageFromDataURL(imgData.dataUrl, imgData.id);
+        await addImageFromDataURL(
+          imgData.dataUrl, 
+          imgData.id,
+          imgData.zoom || 100,
+          imgData.posX || 0,
+          imgData.posY || 0
+        );
+      }
+      // Select first image
+      if (images.length > 0) {
+        selectImage(images[0].id);
       }
       renderCanvas();
       hideEmptyState();
@@ -386,8 +470,9 @@ function renderCanvas() {
 function renderSingleImage(width, height, offsetX = 0, offsetY = 0) {
   if (images.length === 0) return;
   
-  images[0].fabricImage.clone((img) => {
-    scaleAndPositionImage(img, offsetX, offsetY, width, height);
+  const imgData = images[0];
+  imgData.fabricImage.clone((img) => {
+    scaleAndPositionImage(img, offsetX, offsetY, width, height, imgData);
     canvas.add(img);
     canvas.sendToBack(img);
     canvas.renderAll();
@@ -398,8 +483,9 @@ function renderVerticalStack(width, height, offsetX = 0, offsetY = 0) {
   const halfHeight = height / 2;
   
   if (images.length >= 1) {
-    images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, offsetX, offsetY, width, halfHeight);
+    const imgData = images[0];
+    imgData.fabricImage.clone((img) => {
+      scaleAndPositionImage(img, offsetX, offsetY, width, halfHeight, imgData);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -407,8 +493,9 @@ function renderVerticalStack(width, height, offsetX = 0, offsetY = 0) {
   }
   
   if (images.length >= 2) {
-    images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, offsetX, offsetY + halfHeight, width, halfHeight);
+    const imgData = images[1];
+    imgData.fabricImage.clone((img) => {
+      scaleAndPositionImage(img, offsetX, offsetY + halfHeight, width, halfHeight, imgData);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -420,8 +507,9 @@ function renderHorizontalSplit(width, height, offsetX = 0, offsetY = 0) {
   const halfWidth = width / 2;
   
   if (images.length >= 1) {
-    images[0].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, offsetX, offsetY, halfWidth, height);
+    const imgData = images[0];
+    imgData.fabricImage.clone((img) => {
+      scaleAndPositionImage(img, offsetX, offsetY, halfWidth, height, imgData);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -429,8 +517,9 @@ function renderHorizontalSplit(width, height, offsetX = 0, offsetY = 0) {
   }
   
   if (images.length >= 2) {
-    images[1].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, offsetX + halfWidth, offsetY, halfWidth, height);
+    const imgData = images[1];
+    imgData.fabricImage.clone((img) => {
+      scaleAndPositionImage(img, offsetX + halfWidth, offsetY, halfWidth, height, imgData);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -448,8 +537,9 @@ function renderGrid(width, height, offsetX = 0, offsetY = 0) {
   
   for (let i = 0; i < Math.min(images.length, 4); i++) {
     const pos = positions[i];
-    images[i].fabricImage.clone((img) => {
-      scaleAndPositionImage(img, pos[0], pos[1], halfWidth, halfHeight);
+    const imgData = images[i];
+    imgData.fabricImage.clone((img) => {
+      scaleAndPositionImage(img, pos[0], pos[1], halfWidth, halfHeight, imgData);
       canvas.add(img);
       canvas.sendToBack(img);
       canvas.renderAll();
@@ -457,7 +547,12 @@ function renderGrid(width, height, offsetX = 0, offsetY = 0) {
   }
 }
 
-function scaleAndPositionImage(img, x, y, maxWidth, maxHeight) {
+function scaleAndPositionImage(img, x, y, maxWidth, maxHeight, imgData) {
+  // Get per-image zoom and position (with defaults)
+  const zoom = imgData?.zoom || 100;
+  const posX = imgData?.posX || 0;
+  const posY = imgData?.posY || 0;
+  
   img.set({
     left: x,
     top: y,
@@ -471,8 +566,8 @@ function scaleAndPositionImage(img, x, y, maxWidth, maxHeight) {
   const scaleY = maxHeight / img.height;
   let scale = Math.max(scaleX, scaleY); // Cover the area
   
-  // Apply zoom factor
-  scale = scale * (imageZoom / 100);
+  // Apply per-image zoom factor
+  scale = scale * (zoom / 100);
   
   img.scale(scale);
   
@@ -483,8 +578,8 @@ function scaleAndPositionImage(img, x, y, maxWidth, maxHeight) {
   // Position offset as percentage of overflow
   const overflowX = scaledWidth - maxWidth;
   const overflowY = scaledHeight - maxHeight;
-  const offsetX = (imagePosX / 100) * overflowX;
-  const offsetY = (imagePosY / 100) * overflowY;
+  const offsetX = (posX / 100) * overflowX;
+  const offsetY = (posY / 100) * overflowY;
   
   img.set({
     left: x + (maxWidth - scaledWidth) / 2 - offsetX,
