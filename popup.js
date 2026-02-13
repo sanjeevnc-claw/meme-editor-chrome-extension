@@ -23,6 +23,13 @@ function init() {
     backgroundColor: '#1a1a2e'
   });
 
+  // Connect to background to clear badge
+  try {
+    chrome.runtime.connect({ name: 'popup' });
+  } catch (e) {
+    // Ignore if not in extension context
+  }
+
   // Event listeners
   setupEventListeners();
   
@@ -154,18 +161,32 @@ async function addImageFromBlob(blob) {
 }
 
 // Add image from URL (for context menu)
-function addImageFromURL(url) {
-  fabric.Image.fromURL(url, (img) => {
-    images.push({
-      id: Date.now(),
-      fabricImage: img,
-      url: url
-    });
-    
-    addImageThumbnail(images[images.length - 1]);
-    renderCanvas();
-    hideEmptyState();
-  }, { crossOrigin: 'anonymous' });
+async function addImageFromURL(url) {
+  try {
+    // Try to fetch the image to handle CORS
+    const response = await fetch(url);
+    const blob = await response.blob();
+    await addImageFromBlob(blob);
+  } catch (e) {
+    console.log('Fetch failed, trying direct load:', e);
+    // Fallback: try loading directly (might work for some URLs)
+    fabric.Image.fromURL(url, (img) => {
+      if (img) {
+        images.push({
+          id: Date.now(),
+          fabricImage: img,
+          url: url
+        });
+        
+        addImageThumbnail(images[images.length - 1]);
+        renderCanvas();
+        hideEmptyState();
+      } else {
+        console.error('Failed to load image from URL:', url);
+        alert('Could not load image. Try saving it first, then drag & drop.');
+      }
+    }, { crossOrigin: 'anonymous' });
+  }
 }
 
 // Thumbnail management
@@ -227,37 +248,40 @@ function renderCanvas() {
       break;
   }
   
-  // Bring text to front
-  canvas.getObjects().forEach(obj => {
-    if (obj.type === 'textbox') {
-      canvas.bringToFront(obj);
-    }
-  });
-  
   canvas.renderAll();
 }
 
 function renderSingleImage(width, height) {
   if (images.length === 0) return;
   
-  const img = images[0].fabricImage;
-  scaleAndPositionImage(img, 0, 0, width, height);
-  canvas.add(img);
+  // Clone the image to avoid reuse issues
+  images[0].fabricImage.clone((img) => {
+    scaleAndPositionImage(img, 0, 0, width, height);
+    canvas.add(img);
+    canvas.renderAll();
+    bringTextToFront();
+  });
 }
 
 function renderVerticalStack(width, height) {
   const halfHeight = height / 2;
   
   if (images.length >= 1) {
-    const img1 = images[0].fabricImage;
-    scaleAndPositionImage(img1, 0, 0, width, halfHeight);
-    canvas.add(img1);
+    images[0].fabricImage.clone((img) => {
+      scaleAndPositionImage(img, 0, 0, width, halfHeight);
+      canvas.add(img);
+      canvas.renderAll();
+      bringTextToFront();
+    });
   }
   
   if (images.length >= 2) {
-    const img2 = images[1].fabricImage;
-    scaleAndPositionImage(img2, 0, halfHeight, width, halfHeight);
-    canvas.add(img2);
+    images[1].fabricImage.clone((img) => {
+      scaleAndPositionImage(img, 0, halfHeight, width, halfHeight);
+      canvas.add(img);
+      canvas.renderAll();
+      bringTextToFront();
+    });
   }
 }
 
@@ -265,15 +289,21 @@ function renderHorizontalSplit(width, height) {
   const halfWidth = width / 2;
   
   if (images.length >= 1) {
-    const img1 = images[0].fabricImage;
-    scaleAndPositionImage(img1, 0, 0, halfWidth, height);
-    canvas.add(img1);
+    images[0].fabricImage.clone((img) => {
+      scaleAndPositionImage(img, 0, 0, halfWidth, height);
+      canvas.add(img);
+      canvas.renderAll();
+      bringTextToFront();
+    });
   }
   
   if (images.length >= 2) {
-    const img2 = images[1].fabricImage;
-    scaleAndPositionImage(img2, halfWidth, 0, halfWidth, height);
-    canvas.add(img2);
+    images[1].fabricImage.clone((img) => {
+      scaleAndPositionImage(img, halfWidth, 0, halfWidth, height);
+      canvas.add(img);
+      canvas.renderAll();
+      bringTextToFront();
+    });
   }
 }
 
@@ -286,10 +316,22 @@ function renderGrid(width, height) {
   ];
   
   for (let i = 0; i < Math.min(images.length, 4); i++) {
-    const img = images[i].fabricImage;
-    scaleAndPositionImage(img, positions[i][0], positions[i][1], halfWidth, halfHeight);
-    canvas.add(img);
+    const pos = positions[i];
+    images[i].fabricImage.clone((img) => {
+      scaleAndPositionImage(img, pos[0], pos[1], halfWidth, halfHeight);
+      canvas.add(img);
+      canvas.renderAll();
+      bringTextToFront();
+    });
   }
+}
+
+function bringTextToFront() {
+  canvas.getObjects().forEach(obj => {
+    if (obj.type === 'textbox') {
+      canvas.bringToFront(obj);
+    }
+  });
 }
 
 function scaleAndPositionImage(img, x, y, maxWidth, maxHeight) {
