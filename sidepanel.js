@@ -94,15 +94,13 @@ const MemeForge = {
     // Add text
     document.getElementById('add-text-btn').addEventListener('click', () => this.addText());
     
-    // Text controls
-    document.getElementById('font-family').addEventListener('change', () => this.updateSelectedText());
-    document.getElementById('font-size').addEventListener('input', () => this.updateSelectedText());
-    document.getElementById('text-color').addEventListener('input', () => this.updateSelectedText());
-    document.getElementById('stroke-color').addEventListener('input', () => this.updateSelectedText());
-    document.getElementById('stroke-width').addEventListener('input', () => this.updateSelectedText());
-    
-    // Delete text
-    document.getElementById('delete-text-btn').addEventListener('click', () => this.deleteSelectedText());
+    // Floating toolbar controls
+    document.getElementById('toolbar-font').addEventListener('change', () => this.updateSelectedText());
+    document.getElementById('toolbar-size').addEventListener('input', () => this.updateSelectedText());
+    document.getElementById('toolbar-fill').addEventListener('input', () => this.updateSelectedText());
+    document.getElementById('toolbar-stroke').addEventListener('input', () => this.updateSelectedText());
+    document.getElementById('toolbar-stroke-width').addEventListener('input', () => this.updateSelectedText());
+    document.getElementById('toolbar-delete').addEventListener('click', () => this.deleteSelectedText());
     
     // Per-image zoom & position controls (with debounced save)
     document.getElementById('image-zoom').addEventListener('input', (e) => {
@@ -198,10 +196,13 @@ const MemeForge = {
     // Download HD
     document.getElementById('download-btn').addEventListener('click', () => this.downloadHD());
     
-    // Canvas selection events
-    this.canvas.on('selection:created', () => this.showTextControls());
-    this.canvas.on('selection:updated', () => this.showTextControls());
-    this.canvas.on('selection:cleared', () => this.hideTextControls());
+    // Canvas selection events - show/hide floating toolbar
+    this.canvas.on('selection:created', () => this.onTextSelected());
+    this.canvas.on('selection:updated', () => this.onTextSelected());
+    this.canvas.on('selection:cleared', () => this.hideFloatingToolbar());
+    this.canvas.on('object:moving', () => this.updateToolbarPosition());
+    this.canvas.on('object:scaling', () => this.updateToolbarPosition());
+    this.canvas.on('object:modified', () => this.updateToolbarPosition());
     
     // Collapsible sections
     document.getElementById('image-adjust-toggle').addEventListener('click', () => {
@@ -690,11 +691,11 @@ const MemeForge = {
       top: this.canvas.height / 2,
       originX: 'center',
       originY: 'center',
-      fontFamily: document.getElementById('font-family').value,
-      fontSize: parseInt(document.getElementById('font-size').value),
-      fill: document.getElementById('text-color').value,
-      stroke: document.getElementById('stroke-color').value,
-      strokeWidth: parseInt(document.getElementById('stroke-width').value),
+      fontFamily: 'Impact',
+      fontSize: 32,
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeWidth: 2,
       textAlign: 'center',
       width: this.canvas.width * 0.8,
       editable: true,
@@ -712,7 +713,8 @@ const MemeForge = {
     text.selectAll();
     this.canvas.renderAll();
     
-    this.showTextControls();
+    // Show toolbar after a brief delay to let the text render
+    setTimeout(() => this.onTextSelected(), 50);
   },
 
   updateSelectedText() {
@@ -720,11 +722,11 @@ const MemeForge = {
     if (!activeObject || activeObject.type !== 'textbox') return;
     
     activeObject.set({
-      fontFamily: document.getElementById('font-family').value,
-      fontSize: parseInt(document.getElementById('font-size').value),
-      fill: document.getElementById('text-color').value,
-      stroke: document.getElementById('stroke-color').value,
-      strokeWidth: parseInt(document.getElementById('stroke-width').value)
+      fontFamily: document.getElementById('toolbar-font').value,
+      fontSize: parseInt(document.getElementById('toolbar-size').value),
+      fill: document.getElementById('toolbar-fill').value,
+      stroke: document.getElementById('toolbar-stroke').value,
+      strokeWidth: parseInt(document.getElementById('toolbar-stroke-width').value)
     });
     
     this.canvas.renderAll();
@@ -735,28 +737,70 @@ const MemeForge = {
     if (activeObject && activeObject.type === 'textbox') {
       this.canvas.remove(activeObject);
       this.canvas.renderAll();
-      this.hideTextControls();
+      this.hideFloatingToolbar();
     }
   },
 
-  showTextControls() {
+  onTextSelected() {
     const activeObject = this.canvas.getActiveObject();
     if (activeObject && activeObject.type === 'textbox') {
-      document.getElementById('text-controls').classList.remove('hidden');
-      
-      document.getElementById('font-family').value = activeObject.fontFamily || 'Impact';
-      document.getElementById('font-size').value = activeObject.fontSize || 32;
-      document.getElementById('text-color').value = activeObject.fill || '#ffffff';
-      document.getElementById('stroke-color').value = activeObject.stroke || '#000000';
-      document.getElementById('stroke-width').value = activeObject.strokeWidth || 2;
+      this.showFloatingToolbar(activeObject);
+    } else {
+      this.hideFloatingToolbar();
     }
   },
 
-  hideTextControls() {
-    const hasText = this.canvas.getObjects().some(obj => obj.type === 'textbox');
-    if (!hasText) {
-      document.getElementById('text-controls').classList.add('hidden');
+  showFloatingToolbar(textObj) {
+    const toolbar = document.getElementById('text-toolbar');
+    
+    // Update toolbar values from text object
+    document.getElementById('toolbar-font').value = textObj.fontFamily || 'Impact';
+    document.getElementById('toolbar-size').value = textObj.fontSize || 32;
+    document.getElementById('toolbar-fill').value = textObj.fill || '#ffffff';
+    document.getElementById('toolbar-stroke').value = textObj.stroke || '#000000';
+    document.getElementById('toolbar-stroke-width').value = textObj.strokeWidth || 2;
+    
+    // Position toolbar above the text
+    this.updateToolbarPosition();
+    
+    toolbar.classList.remove('hidden');
+  },
+
+  updateToolbarPosition() {
+    const activeObject = this.canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'textbox') return;
+    
+    const toolbar = document.getElementById('text-toolbar');
+    const canvasArea = document.querySelector('.canvas-area');
+    const canvasEl = this.canvas.getElement();
+    
+    // Get canvas position relative to canvas-area
+    const canvasRect = canvasEl.getBoundingClientRect();
+    const areaRect = canvasArea.getBoundingClientRect();
+    
+    // Get object bounding rect
+    const objBound = activeObject.getBoundingRect();
+    
+    // Calculate position - above the text, centered
+    const toolbarWidth = toolbar.offsetWidth || 280;
+    let left = (canvasRect.left - areaRect.left) + objBound.left + (objBound.width / 2) - (toolbarWidth / 2);
+    let top = (canvasRect.top - areaRect.top) + objBound.top - 45;
+    
+    // Keep within bounds
+    const maxLeft = areaRect.width - toolbarWidth - 10;
+    left = Math.max(5, Math.min(left, maxLeft));
+    
+    // If too close to top, show below instead
+    if (top < 5) {
+      top = (canvasRect.top - areaRect.top) + objBound.top + objBound.height + 10;
     }
+    
+    toolbar.style.left = left + 'px';
+    toolbar.style.top = top + 'px';
+  },
+
+  hideFloatingToolbar() {
+    document.getElementById('text-toolbar').classList.add('hidden');
   },
 
   showEmptyState() {

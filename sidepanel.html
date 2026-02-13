@@ -23,6 +23,22 @@
         <div class="empty-icon">📋</div>
         <div class="empty-text">Paste image (Ctrl+V)<br>or drag & drop</div>
       </div>
+      
+      <!-- Floating Text Toolbar -->
+      <div id="text-toolbar" class="text-toolbar hidden">
+        <select id="toolbar-font" class="toolbar-select" title="Font">
+          <option value="Impact">Impact</option>
+          <option value="Arial Black">Arial</option>
+          <option value="Comic Sans MS">Comic</option>
+        </select>
+        <input type="number" id="toolbar-size" class="toolbar-size" value="32" min="12" max="120" title="Font Size">
+        <div class="toolbar-divider"></div>
+        <input type="color" id="toolbar-fill" class="toolbar-color" value="#ffffff" title="Fill Color">
+        <input type="color" id="toolbar-stroke" class="toolbar-color" value="#000000" title="Stroke Color">
+        <input type="number" id="toolbar-stroke-width" class="toolbar-stroke-width" value="2" min="0" max="10" title="Stroke Width">
+        <div class="toolbar-divider"></div>
+        <button id="toolbar-delete" class="toolbar-btn toolbar-delete" title="Delete">🗑</button>
+      </div>
     </div>
 
     <!-- Controls -->
@@ -42,38 +58,7 @@
       <!-- Text Section -->
       <div class="section">
         <button id="add-text-btn" class="secondary-btn">+ Add Text</button>
-        
-        <div id="text-controls" class="text-controls hidden">
-          <div class="row" style="margin-top: 12px;">
-            <div class="field">
-              <label>Font</label>
-              <select id="font-family">
-                <option value="Impact" selected>Impact</option>
-                <option value="Arial Black">Arial</option>
-                <option value="Comic Sans MS">Comic Sans</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Size</label>
-              <input type="number" id="font-size" value="32" min="12" max="120">
-            </div>
-          </div>
-          <div class="row">
-            <div class="field">
-              <label>Fill</label>
-              <input type="color" id="text-color" value="#ffffff">
-            </div>
-            <div class="field">
-              <label>Stroke</label>
-              <input type="color" id="stroke-color" value="#000000">
-            </div>
-            <div class="field">
-              <label>Width</label>
-              <input type="number" id="stroke-width" value="2" min="0" max="10">
-            </div>
-          </div>
-          <button id="delete-text-btn" class="delete-btn">Delete selected</button>
-        </div>
+        <p class="hint-text">Click text on canvas to edit • Use floating toolbar to style</p>
       </div>
 
       <!-- Layout Section -->
