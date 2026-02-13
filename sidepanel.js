@@ -636,24 +636,18 @@ function addText() {
     width: canvas.width * 0.8,
     editable: true,
     paintFirst: 'stroke',
-    // Only allow uniform scaling (corners only, no distortion)
-    lockUniScaling: true,
-    // Hide middle scaling controls
-    setControlsVisibility: {
-      mt: false, // middle top
-      mb: false, // middle bottom
-      ml: false, // middle left
-      mr: false  // middle right
-    }
+    lockUniScaling: true
   });
   
-  // Apply control visibility
-  text.setControlsVisibility({
-    mt: false,
-    mb: false,
-    ml: false,
-    mr: false
-  });
+  // Hide middle scaling controls (corners only for uniform scaling)
+  if (text.setControlsVisibility) {
+    text.setControlsVisibility({
+      mt: false,
+      mb: false,
+      ml: false,
+      mr: false
+    });
+  }
   
   canvas.add(text);
   canvas.setActiveObject(text);
