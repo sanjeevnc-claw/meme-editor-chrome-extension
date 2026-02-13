@@ -14,6 +14,33 @@
     <!-- Header -->
     <div class="header">
       <h1>MemeForge</h1>
+      <div class="header-actions">
+        <button id="new-meme-btn" class="header-btn" title="New Meme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button id="gallery-btn" class="header-btn" title="Meme Gallery">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span id="gallery-count" class="gallery-count hidden">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Saved Memes</h2>
+          <button id="close-gallery" class="modal-close">×</button>
+        </div>
+        <div id="gallery-grid" class="gallery-grid">
+          <div class="gallery-empty">No saved memes yet.<br>Click "New" to save your current work.</div>
+        </div>
+      </div>
     </div>
 
     <!-- Canvas Area -->

@@ -8,11 +8,13 @@ const MemeForge = {
   CANVAS_WIDTH: 400,
   CANVAS_HEIGHT: 400,
   MAX_IMAGE_SIZE: 800, // Max dimension for storage compression
+  GALLERY_THUMB_SIZE: 200, // Thumbnail size for gallery
   STORAGE_DEBOUNCE_MS: 500,
   
   // State
   canvas: null,
   images: [], // { id, dataUrl, fabricImage, zoom, posX, posY }
+  gallery: [], // { id, thumbnail, createdAt }
   currentLayout: 'single',
   currentAspect: '1:1',
   currentBgColor: '#000000',
@@ -34,6 +36,7 @@ const MemeForge = {
     });
 
     this.setupEventListeners();
+    await this.loadGallery();
     await this.loadSavedImages();
     this.loadContextMenuImage();
   },
@@ -45,6 +48,18 @@ const MemeForge = {
   },
 
   setupEventListeners() {
+    // New meme button
+    document.getElementById('new-meme-btn').addEventListener('click', () => this.newMeme());
+    
+    // Gallery button
+    document.getElementById('gallery-btn').addEventListener('click', () => this.openGallery());
+    document.getElementById('close-gallery').addEventListener('click', () => this.closeGallery());
+    
+    // Close gallery on backdrop click
+    document.getElementById('gallery-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'gallery-modal') this.closeGallery();
+    });
+    
     // Paste from clipboard
     document.addEventListener('paste', (e) => this.handlePaste(e));
     
@@ -915,6 +930,207 @@ const MemeForge = {
         console.error('Failed to load context menu image:', e);
       }
     }
+  },
+
+  // ============ GALLERY METHODS ============
+
+  async newMeme() {
+    // Only save to gallery if there's content
+    if (this.images.length > 0 || this.canvas.getObjects().filter(o => o.type === 'textbox').length > 0) {
+      await this.saveToGallery();
+    }
+    
+    // Clear current canvas
+    this.clearCurrentMeme();
+  },
+
+  clearCurrentMeme() {
+    // Dispose all fabric images
+    this.images.forEach(img => {
+      if (img.fabricImage?.dispose) {
+        img.fabricImage.dispose();
+      }
+    });
+    
+    this.images = [];
+    this.selectedImageId = null;
+    this.paddingTop = this.paddingBottom = this.paddingLeft = this.paddingRight = 0;
+    
+    // Reset UI
+    document.getElementById('image-list').innerHTML = '';
+    document.getElementById('selected-image-label').textContent = 'Click a thumbnail to select';
+    document.getElementById('padding-all').value = 0;
+    document.getElementById('padding-value').textContent = '0';
+    document.getElementById('padding-top').value = 0;
+    document.getElementById('padding-bottom').value = 0;
+    document.getElementById('padding-left').value = 0;
+    document.getElementById('padding-right').value = 0;
+    
+    // Clear canvas
+    this.canvas.clear();
+    this.canvas.setBackgroundColor(this.currentBgColor, () => this.canvas.renderAll());
+    
+    // Clear saved images
+    this.saveImagesToStorage();
+    this.showEmptyState();
+  },
+
+  async saveToGallery() {
+    try {
+      // Deselect objects for clean render
+      this.canvas.discardActiveObject();
+      this.canvas.renderAll();
+      
+      // Create thumbnail
+      const thumbnail = this.canvas.toDataURL({
+        format: 'jpeg',
+        quality: 0.7,
+        multiplier: this.GALLERY_THUMB_SIZE / Math.max(this.canvas.width, this.canvas.height)
+      });
+      
+      const galleryItem = {
+        id: Date.now(),
+        thumbnail: thumbnail,
+        createdAt: new Date().toISOString()
+      };
+      
+      this.gallery.unshift(galleryItem); // Add to beginning
+      
+      // Limit gallery to 50 items to manage storage
+      if (this.gallery.length > 50) {
+        this.gallery = this.gallery.slice(0, 50);
+      }
+      
+      await this.saveGalleryToStorage();
+      this.updateGalleryCount();
+      
+    } catch (e) {
+      console.error('Failed to save to gallery:', e);
+    }
+  },
+
+  async saveGalleryToStorage() {
+    try {
+      await chrome.storage.local.set({ memeGallery: this.gallery });
+    } catch (e) {
+      console.error('Failed to save gallery:', e);
+      if (e.message?.includes('QUOTA')) {
+        // Remove oldest items and try again
+        this.gallery = this.gallery.slice(0, Math.floor(this.gallery.length / 2));
+        await chrome.storage.local.set({ memeGallery: this.gallery });
+        this.showError('Gallery trimmed due to storage limit');
+      }
+    }
+  },
+
+  async loadGallery() {
+    try {
+      const result = await chrome.storage.local.get(['memeGallery']);
+      if (result.memeGallery) {
+        this.gallery = result.memeGallery;
+        this.updateGalleryCount();
+      }
+    } catch (e) {
+      console.error('Failed to load gallery:', e);
+    }
+  },
+
+  updateGalleryCount() {
+    const countEl = document.getElementById('gallery-count');
+    if (this.gallery.length > 0) {
+      countEl.textContent = this.gallery.length;
+      countEl.classList.remove('hidden');
+    } else {
+      countEl.classList.add('hidden');
+    }
+  },
+
+  openGallery() {
+    this.renderGalleryGrid();
+    document.getElementById('gallery-modal').classList.remove('hidden');
+  },
+
+  closeGallery() {
+    document.getElementById('gallery-modal').classList.add('hidden');
+  },
+
+  renderGalleryGrid() {
+    const grid = document.getElementById('gallery-grid');
+    
+    if (this.gallery.length === 0) {
+      grid.innerHTML = '<div class="gallery-empty">No saved memes yet.<br>Click "+" to save your current work and start fresh.</div>';
+      return;
+    }
+    
+    grid.innerHTML = this.gallery.map(item => `
+      <div class="gallery-item" data-id="${item.id}">
+        <img src="${item.thumbnail}" alt="Saved meme">
+        <div class="gallery-item-actions">
+          <button class="gallery-item-btn copy" title="Copy to clipboard" data-action="copy">📋</button>
+          <button class="gallery-item-btn delete" title="Delete" data-action="delete">🗑</button>
+        </div>
+      </div>
+    `).join('');
+    
+    // Add event listeners
+    grid.querySelectorAll('.gallery-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        const id = parseInt(item.dataset.id);
+        
+        if (action === 'copy') {
+          this.copyGalleryItem(id);
+        } else if (action === 'delete') {
+          this.deleteGalleryItem(id);
+        }
+        // Clicking on the image itself does nothing for now (could add "load" feature later)
+      });
+    });
+  },
+
+  async copyGalleryItem(id) {
+    const item = this.gallery.find(i => i.id === id);
+    if (!item) return;
+    
+    try {
+      const response = await fetch(item.thumbnail);
+      const blob = await response.blob();
+      
+      // Convert JPEG to PNG for clipboard
+      const img = new Image();
+      img.src = item.thumbnail;
+      await new Promise(resolve => img.onload = resolve);
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      
+      const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': pngBlob })
+      ]);
+      
+      // Visual feedback
+      const itemEl = document.querySelector(`[data-id="${id}"]`);
+      if (itemEl) {
+        itemEl.style.borderColor = '#34c759';
+        setTimeout(() => {
+          itemEl.style.borderColor = '';
+        }, 1000);
+      }
+    } catch (e) {
+      console.error('Failed to copy gallery item:', e);
+    }
+  },
+
+  async deleteGalleryItem(id) {
+    this.gallery = this.gallery.filter(i => i.id !== id);
+    await this.saveGalleryToStorage();
+    this.updateGalleryCount();
+    this.renderGalleryGrid();
   }
 };
 
