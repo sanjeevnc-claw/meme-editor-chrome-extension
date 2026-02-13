@@ -1174,7 +1174,10 @@ const MemeForge = {
     
     grid.innerHTML = this.gallery.map(item => `
       <div class="gallery-item" data-id="${item.id}">
-        <img src="${item.thumbnail}" alt="Saved meme">
+        <img src="${item.thumbnail}" alt="Saved meme" title="Click to load">
+        <div class="gallery-item-overlay">
+          <span class="gallery-load-hint">Click to edit</span>
+        </div>
         <div class="gallery-item-actions">
           <button class="gallery-item-btn copy" title="Copy to clipboard" data-action="copy">📋</button>
           <button class="gallery-item-btn delete" title="Delete" data-action="delete">🗑</button>
@@ -1184,18 +1187,43 @@ const MemeForge = {
     
     // Add event listeners
     grid.querySelectorAll('.gallery-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        const action = e.target.dataset.action;
-        const id = parseInt(item.dataset.id);
-        
-        if (action === 'copy') {
-          this.copyGalleryItem(id);
-        } else if (action === 'delete') {
-          this.deleteGalleryItem(id);
-        }
-        // Clicking on the image itself does nothing for now (could add "load" feature later)
+      const id = parseInt(item.dataset.id);
+      
+      // Click on image loads it to editor
+      item.querySelector('img').addEventListener('click', () => {
+        this.loadGalleryItem(id);
+      });
+      
+      // Action buttons
+      item.querySelector('[data-action="copy"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.copyGalleryItem(id);
+      });
+      
+      item.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteGalleryItem(id);
       });
     });
+  },
+
+  async loadGalleryItem(id) {
+    const item = this.gallery.find(i => i.id === id);
+    if (!item) return;
+    
+    // Clear current canvas
+    this.clearCurrentMeme();
+    
+    // Load the saved meme as an image
+    try {
+      const response = await fetch(item.thumbnail);
+      const blob = await response.blob();
+      await this.addImageFromBlob(blob);
+      
+      this.closeGallery();
+    } catch (e) {
+      console.error('Failed to load gallery item:', e);
+    }
   },
 
   async copyGalleryItem(id) {
