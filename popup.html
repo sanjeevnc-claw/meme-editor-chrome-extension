@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MemeForge</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Canvas Area -->
+    <div class="canvas-area">
+      <canvas id="meme-canvas"></canvas>
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">🖼️</div>
+        <div class="empty-text">Paste image (Ctrl+V)<br>or drag & drop</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Images Section -->
+      <div class="section">
+        <div class="section-title">IMAGES</div>
+        <div id="drop-zone" class="drop-zone">
+          <span>Drop images here</span>
+        </div>
+        <div id="image-list" class="image-list"></div>
+      </div>
+
+      <!-- Layout Section -->
+      <div class="section">
+        <div class="section-title">LAYOUT</div>
+        <div class="layout-buttons">
+          <button class="layout-btn active" data-layout="single" title="Single">1</button>
+          <button class="layout-btn" data-layout="vertical" title="Vertical Stack">⬛<br>⬛</button>
+          <button class="layout-btn" data-layout="horizontal" title="Side by Side">⬛⬛</button>
+          <button class="layout-btn" data-layout="grid" title="2x2 Grid">⬛⬛<br>⬛⬛</button>
+        </div>
+        <div class="aspect-ratio">
+          <label>Aspect:</label>
+          <select id="aspect-ratio">
+            <option value="1:1">1:1 Square</option>
+            <option value="4:3">4:3</option>
+            <option value="16:9">16:9 Wide</option>
+            <option value="9:16">9:16 Story</option>
+            <option value="free">Free</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Text Section -->
+      <div class="section">
+        <div class="section-title">TEXT</div>
+        <button id="add-text-btn" class="add-text-btn">+ Add Text</button>
+        
+        <div id="text-controls" class="text-controls hidden">
+          <div class="control-row">
+            <label>Font:</label>
+            <select id="font-family">
+              <option value="Impact">Impact</option>
+              <option value="Arial Black">Arial</option>
+              <option value="Comic Sans MS">Comic Sans</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label>Size:</label>
+            <input type="range" id="font-size" min="12" max="72" value="32">
+            <span id="font-size-value">32</span>
+          </div>
+          <div class="control-row">
+            <label>Color:</label>
+            <input type="color" id="text-color" value="#ffffff">
+          </div>
+          <div class="control-row">
+            <label>Stroke:</label>
+            <input type="color" id="stroke-color" value="#000000">
+          </div>
+          <div class="control-row">
+            <label>Stroke Width:</label>
+            <input type="range" id="stroke-width" min="0" max="8" value="2">
+          </div>
+          <button id="delete-text-btn" class="delete-btn">🗑️ Delete Selected</button>
+        </div>
+      </div>
+
+      <!-- Export Section -->
+      <div class="section export-section">
+        <button id="copy-btn" class="copy-btn">📋 Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lib/fabric.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
