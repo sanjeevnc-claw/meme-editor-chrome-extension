@@ -1098,17 +1098,43 @@ const MemeForge = {
         multiplier: this.GALLERY_THUMB_SIZE / Math.max(this.canvas.width, this.canvas.height)
       });
       
+      // Save full state for restoration
+      const textObjects = this.canvas.getObjects()
+        .filter(obj => obj.type === 'textbox')
+        .map(obj => obj.toJSON(['isPlaceholder']));
+      
+      const state = {
+        images: this.images.map(img => ({
+          id: img.id,
+          dataUrl: img.dataUrl,
+          zoom: img.zoom,
+          posX: img.posX,
+          posY: img.posY
+        })),
+        textObjects: textObjects,
+        layout: this.currentLayout,
+        aspect: this.currentAspect,
+        bgColor: this.currentBgColor,
+        padding: {
+          top: this.paddingTop,
+          bottom: this.paddingBottom,
+          left: this.paddingLeft,
+          right: this.paddingRight
+        }
+      };
+      
       const galleryItem = {
         id: Date.now(),
         thumbnail: thumbnail,
+        state: state,
         createdAt: new Date().toISOString()
       };
       
       this.gallery.unshift(galleryItem); // Add to beginning
       
-      // Limit gallery to 50 items to manage storage
-      if (this.gallery.length > 50) {
-        this.gallery = this.gallery.slice(0, 50);
+      // Limit gallery to 30 items (full state takes more space)
+      if (this.gallery.length > 30) {
+        this.gallery = this.gallery.slice(0, 30);
       }
       
       await this.saveGalleryToStorage();
@@ -1214,15 +1240,98 @@ const MemeForge = {
     // Clear current canvas
     this.clearCurrentMeme();
     
-    // Load the saved meme as an image
     try {
-      const response = await fetch(item.thumbnail);
-      const blob = await response.blob();
-      await this.addImageFromBlob(blob);
+      // Check if we have full state (new format) or just thumbnail (old format)
+      if (item.state) {
+        await this.restoreFullState(item.state);
+      } else {
+        // Legacy: load thumbnail as image
+        const response = await fetch(item.thumbnail);
+        const blob = await response.blob();
+        await this.addImageFromBlob(blob);
+      }
       
       this.closeGallery();
     } catch (e) {
       console.error('Failed to load gallery item:', e);
+    }
+  },
+
+  async restoreFullState(state) {
+    // Restore layout
+    this.currentLayout = state.layout || 'single';
+    document.querySelectorAll('.layout-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.layout === this.currentLayout);
+    });
+    
+    // Restore aspect ratio
+    this.currentAspect = state.aspect || '1:1';
+    document.getElementById('aspect-ratio').value = this.currentAspect;
+    this.updateCanvasSize();
+    
+    // Restore background color
+    this.currentBgColor = state.bgColor || '#000000';
+    document.querySelectorAll('.toggle-btn[data-bg]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.bg === this.currentBgColor);
+    });
+    this.canvas.setBackgroundColor(this.currentBgColor, () => {});
+    
+    // Restore padding
+    if (state.padding) {
+      this.paddingTop = state.padding.top || 0;
+      this.paddingBottom = state.padding.bottom || 0;
+      this.paddingLeft = state.padding.left || 0;
+      this.paddingRight = state.padding.right || 0;
+      
+      document.getElementById('padding-top').value = this.paddingTop;
+      document.getElementById('padding-bottom').value = this.paddingBottom;
+      document.getElementById('padding-left').value = this.paddingLeft;
+      document.getElementById('padding-right').value = this.paddingRight;
+      document.getElementById('padding-all').value = 0;
+      document.getElementById('padding-value').textContent = '0';
+    }
+    
+    // Restore images
+    if (state.images?.length > 0) {
+      for (const imgData of state.images) {
+        await this.addImageFromDataURL(
+          imgData.dataUrl,
+          imgData.id,
+          imgData.zoom || 100,
+          imgData.posX || 0,
+          imgData.posY || 0
+        );
+      }
+      if (this.images.length > 0) {
+        this.selectImage(this.images[0].id);
+      }
+      this.hideEmptyState();
+    }
+    
+    // Render canvas with images first
+    this.renderCanvas();
+    
+    // Restore text objects
+    if (state.textObjects?.length > 0) {
+      for (const textData of state.textObjects) {
+        fabric.Textbox.fromObject(textData, (text) => {
+          // Re-apply settings that might not serialize
+          text.set({
+            cursorColor: '#0066cc',
+            cursorWidth: 2,
+            editingBorderColor: '#0066cc',
+            hoverCursor: 'text'
+          });
+          
+          if (text.setControlsVisibility) {
+            text.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+          }
+          
+          this.setupTextEvents(text);
+          this.canvas.add(text);
+          this.canvas.renderAll();
+        });
+      }
     }
   },
 
