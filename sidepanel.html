@@ -80,6 +80,31 @@
         </div>
       </div>
 
+      <!-- Image Zoom & Position -->
+      <div class="section" id="image-adjust-section">
+        <div class="section-title">Image Adjust</div>
+        <div class="row">
+          <div class="field">
+            <label>Zoom</label>
+            <input type="range" id="image-zoom" min="100" max="200" value="100">
+          </div>
+          <div class="field zoom-value-field">
+            <span id="zoom-value">100%</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Position X</label>
+            <input type="range" id="image-pos-x" min="-50" max="50" value="0">
+          </div>
+          <div class="field">
+            <label>Position Y</label>
+            <input type="range" id="image-pos-y" min="-50" max="50" value="0">
+          </div>
+        </div>
+        <button id="reset-adjust" class="text-btn">Reset to default</button>
+      </div>
+
       <!-- Text Section -->
       <div class="section">
         <div class="section-header">

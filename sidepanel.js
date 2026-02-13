@@ -8,10 +8,13 @@ const CANVAS_HEIGHT = 400;
 
 // State
 let canvas;
-let images = []; // { id, dataUrl, fabricImage }
+let images = []; // { id, dataUrl, fabricImage, zoom, posX, posY }
 let currentLayout = 'single';
 let currentAspect = '1:1';
 let currentBgColor = '#ffffff';
+let imageZoom = 100;
+let imagePosX = 0;
+let imagePosY = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', init);
@@ -93,6 +96,34 @@ function setupEventListeners() {
   
   // Delete text
   document.getElementById('delete-text-btn').addEventListener('click', deleteSelectedText);
+  
+  // Image zoom & position
+  document.getElementById('image-zoom').addEventListener('input', (e) => {
+    imageZoom = parseInt(e.target.value);
+    document.getElementById('zoom-value').textContent = imageZoom + '%';
+    renderCanvas();
+  });
+  
+  document.getElementById('image-pos-x').addEventListener('input', (e) => {
+    imagePosX = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('image-pos-y').addEventListener('input', (e) => {
+    imagePosY = parseInt(e.target.value);
+    renderCanvas();
+  });
+  
+  document.getElementById('reset-adjust').addEventListener('click', () => {
+    imageZoom = 100;
+    imagePosX = 0;
+    imagePosY = 0;
+    document.getElementById('image-zoom').value = 100;
+    document.getElementById('zoom-value').textContent = '100%';
+    document.getElementById('image-pos-x').value = 0;
+    document.getElementById('image-pos-y').value = 0;
+    renderCanvas();
+  });
   
   // Copy to clipboard
   document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
@@ -388,16 +419,26 @@ function scaleAndPositionImage(img, x, y, maxWidth, maxHeight) {
   
   const scaleX = maxWidth / img.width;
   const scaleY = maxHeight / img.height;
-  const scale = Math.max(scaleX, scaleY); // Cover the area
+  let scale = Math.max(scaleX, scaleY); // Cover the area
+  
+  // Apply zoom factor
+  scale = scale * (imageZoom / 100);
   
   img.scale(scale);
   
-  // Center within the area
+  // Center within the area + position offset
   const scaledWidth = img.width * scale;
   const scaledHeight = img.height * scale;
+  
+  // Position offset as percentage of overflow
+  const overflowX = scaledWidth - maxWidth;
+  const overflowY = scaledHeight - maxHeight;
+  const offsetX = (imagePosX / 100) * overflowX;
+  const offsetY = (imagePosY / 100) * overflowY;
+  
   img.set({
-    left: x + (maxWidth - scaledWidth) / 2,
-    top: y + (maxHeight - scaledHeight) / 2
+    left: x + (maxWidth - scaledWidth) / 2 - offsetX,
+    top: y + (maxHeight - scaledHeight) / 2 - offsetY
   });
   
   // Clip to the area
