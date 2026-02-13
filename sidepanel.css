@@ -260,6 +260,11 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* Text editing cursor - on canvas container */
+.canvas-area.text-cursor .upper-canvas {
+  cursor: text !important;
+}
+
 .empty-state {
   position: absolute;
   display: flex;

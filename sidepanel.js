@@ -23,6 +23,7 @@ const MemeForge = {
   paddingBottom: 0,
   paddingLeft: 0,
   paddingRight: 0,
+  isEditingText: false,
   
   // Debounce timer
   saveTimeout: null,
@@ -226,6 +227,41 @@ const MemeForge = {
     
     document.getElementById('padding-toggle').addEventListener('click', () => {
       this.toggleCollapsible('padding-content', 'padding-toggle');
+    });
+    
+    // Double-click on canvas to add text at that position
+    this.canvas.on('mouse:dblclick', (e) => {
+      // Only add text if not clicking on an existing object
+      if (!e.target) {
+        this.addTextAtPosition(e.pointer.x, e.pointer.y);
+      }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // ESC to exit text editing or deselect
+      if (e.key === 'Escape') {
+        const activeObj = this.canvas.getActiveObject();
+        if (activeObj && activeObj.type === 'textbox' && activeObj.isEditing) {
+          activeObj.exitEditing();
+          this.canvas.discardActiveObject();
+          this.canvas.renderAll();
+        } else if (activeObj) {
+          this.canvas.discardActiveObject();
+          this.canvas.renderAll();
+        }
+      }
+      
+      // Delete/Backspace to remove selected object (when not editing text)
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !this.isEditingText) {
+        const activeObj = this.canvas.getActiveObject();
+        if (activeObj && activeObj.type === 'textbox' && !activeObj.isEditing) {
+          e.preventDefault();
+          this.canvas.remove(activeObj);
+          this.canvas.renderAll();
+          this.hideFloatingToolbar();
+        }
+      }
     });
   },
 
@@ -715,12 +751,20 @@ const MemeForge = {
       width: this.canvas.width * 0.8,
       editable: true,
       paintFirst: 'stroke',
-      lockUniScaling: true
+      lockUniScaling: true,
+      cursorColor: '#0066cc',
+      cursorWidth: 2,
+      editingBorderColor: '#0066cc',
+      hoverCursor: 'text',
+      isPlaceholder: true // Custom flag to track placeholder state
     });
     
     if (text.setControlsVisibility) {
       text.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
     }
+    
+    // Setup text events
+    this.setupTextEvents(text);
     
     this.canvas.add(text);
     this.canvas.setActiveObject(text);
@@ -729,6 +773,72 @@ const MemeForge = {
     this.canvas.renderAll();
     
     // Show toolbar after a brief delay to let the text render
+    setTimeout(() => this.onTextSelected(), 50);
+  },
+
+  setupTextEvents(textObj) {
+    // Clear placeholder on first edit
+    textObj.on('editing:entered', () => {
+      if (textObj.isPlaceholder && textObj.text === 'YOUR TEXT') {
+        textObj.selectAll();
+      }
+    });
+    
+    // Mark as no longer placeholder after first edit
+    textObj.on('changed', () => {
+      if (textObj.isPlaceholder && textObj.text !== 'YOUR TEXT') {
+        textObj.isPlaceholder = false;
+      }
+    });
+    
+    // Handle keyboard shortcuts while editing
+    textObj.on('editing:entered', () => {
+      this.isEditingText = true;
+    });
+    
+    textObj.on('editing:exited', () => {
+      this.isEditingText = false;
+      // Remove empty text boxes
+      if (textObj.text.trim() === '') {
+        this.canvas.remove(textObj);
+        this.hideFloatingToolbar();
+      }
+    });
+  },
+
+  addTextAtPosition(x, y) {
+    const text = new fabric.Textbox('', {
+      left: x,
+      top: y,
+      originX: 'center',
+      originY: 'center',
+      fontFamily: 'Impact',
+      fontSize: 32,
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeWidth: 2,
+      textAlign: 'center',
+      width: Math.min(this.canvas.width * 0.8, 300),
+      editable: true,
+      paintFirst: 'stroke',
+      lockUniScaling: true,
+      cursorColor: '#0066cc',
+      cursorWidth: 2,
+      editingBorderColor: '#0066cc',
+      hoverCursor: 'text'
+    });
+    
+    if (text.setControlsVisibility) {
+      text.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+    }
+    
+    this.setupTextEvents(text);
+    
+    this.canvas.add(text);
+    this.canvas.setActiveObject(text);
+    text.enterEditing();
+    this.canvas.renderAll();
+    
     setTimeout(() => this.onTextSelected(), 50);
   },
 
